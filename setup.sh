@@ -112,6 +112,13 @@ oc login $apiserver_url -u $kubeadmin_username -p $kubeadmin_password
 
 oc get nodes
 kubectl get nodes
+# NAME                                   STATUS   ROLES    AGE   VERSION
+# myaro-vvkh8-master-0                   Ready    master   34m   v1.22.5+a36406b
+# myaro-vvkh8-master-1                   Ready    master   34m   v1.22.5+a36406b
+# myaro-vvkh8-master-2                   Ready    master   34m   v1.22.5+a36406b
+# myaro-vvkh8-worker-westeurope1-8l8dp   Ready    worker   25m   v1.22.5+a36406b
+# myaro-vvkh8-worker-westeurope2-fwp59   Ready    worker   25m   v1.22.5+a36406b
+# myaro-vvkh8-worker-westeurope3-px8cm   Ready    worker   25m   v1.22.5+a36406b
 
 # Deploy all items from demos namespace
 kubectl apply -f demos/namespace.yaml
