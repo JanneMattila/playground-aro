@@ -1,8 +1,19 @@
 #!/bin/bash
 
-# All the variables for the deployment
 subscription_name="AzureDev"
 
+# Login and set correct context
+az login -o table
+az account set --subscription $subscription_name -o table
+
+# Prepare by fetching oc client
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz -O oc.tar.gz
+mkdir openshift
+tar -zxvf oc.tar.gz -C openshift
+sudo cp openshift/oc /usr/local/bin
+oc --help
+
+# All the variables for the deployment
 aro_name="myaro"
 acr_name="myaro0000010"
 workspace_name="myaroworkspace"
@@ -12,10 +23,6 @@ workers_subnet="snet-workers"
 resource_group_name="rg-myaro"
 cluster_resource_group_name="rg-myaro-cluster"
 location="westeurope"
-
-# Login and set correct context
-az login -o table
-az account set --subscription $subscription_name -o table
 
 resource_group_id=$(az group create -l $location -n $resource_group_name -o table --query id -o tsv)
 echo $resource_group_id
@@ -70,33 +77,40 @@ az aro create -g $resource_group_name -n $aro_name \
 # Invalid --cluster-resource-group 'rg-myaro-cluster': resource group must not exist.
 
 # No --pull-secret provided: cluster will not include samples or operators from Red Hat or from certified partners.
+# -> Get a Red Hat pull secret
+#    https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster#get-a-red-hat-pull-secret-optional
 
 # Code: InvalidLinkedVNet
 # Message: The provided subnet '.../snet-masters' is invalid: 
 #          must not have a network security group attached.
 ############################################
 
-credentials_json=$(az aro list-credentials \
-  --name $aro_name \
-  --resource-group $resource_group_name -o json)
+credentials_json=$(az aro list-credentials --name $aro_name --resource-group $resource_group_name -o json)
 kubeadmin_username=$(echo $credentials_json | jq -r .kubeadminUsername)
 kubeadmin_password=$(echo $credentials_json | jq -r .kubeadminPassword)
 
-aro_json=$(az aro show \
-    --name $aro_name \
-    --resource-group $resource_group_name -o json)
+echo $kubeadmin_username
+echo $kubeadmin_password
+
+aro_json=$(az aro show --name $aro_name --resource-group $resource_group_name -o json)
 console_url=$(echo $aro_json | jq -r .consoleProfile.url)
 apiserver_url=$(echo $aro_json | jq -r .apiserverProfile.url)
 
-wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz -O oc.tar.gz
-mkdir openshift
-tar -zxvf oc.tar.gz -C openshift
-sudo cp openshift/oc /usr/local/bin
-/usr/local/bin/oc
-oc
-echo $PATH
+echo $console_url
+echo $apiserver_url
+
+###################################
+#  _                   _
+# | |     ___    __ _ (_) _ __
+# | |    / _ \  / _` || || '_ \
+# | |___| (_) || (_| || || | | |
+# |_____|\___/  \__, ||_||_| |_|
+#               |___/
+###################################
+
 oc login $apiserver_url -u $kubeadmin_username -p $kubeadmin_password
 
+oc get nodes
 kubectl get nodes
 
 # Deploy all items from demos namespace
@@ -107,16 +121,17 @@ kubectl apply -f demos/service.yaml
 kubectl get deployment -n demos
 kubectl describe deployment -n demos
 
+kubectl get pod -n demos
 pod1=$(kubectl get pod -n demos -o name | head -n 1)
 echo $pod1
 
 kubectl describe $pod1 -n demos
 kubectl get service -n demos
 
-ingressip=$(kubectl get service -n demos -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
-echo $ingressip
+ingress_ip=$(kubectl get service -n demos -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
+echo $ingress_ip
 
-curl $ingressip
+curl $ingress_ip
 # -> <html><body>Hello there!</body></html>
 
 # Wipe out the resources

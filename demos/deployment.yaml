@@ -4,7 +4,7 @@ metadata:
   name: webapp-network-tester-demo
   namespace: demos
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: webapp-network-tester-demo
@@ -16,17 +16,19 @@ spec:
       nodeSelector:
         kubernetes.io/os: linux
       containers:
-      - image: jannemattila/webapp-network-tester:1.0.41
-        imagePullPolicy: Always
-        name: webapp-network-tester-demo
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 150m
-            memory: 150Mi
-        ports:
-        - containerPort: 80
-          name: http
-          protocol: TCP
+        - image: jannemattila/webapp-network-tester
+          name: webapp-network-tester-demo
+          env:
+            - name: ASPNETCORE_URLS
+              value: http://*:8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 150m
+              memory: 150Mi
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
