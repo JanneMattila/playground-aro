@@ -348,3 +348,7 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+openshift/kubectl
+openshift/oc
+openshift/README.md
+oc.tar.gz
